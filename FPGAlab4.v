@@ -1,4 +1,13 @@
-
+`timescale 1ns / 1ps
+module fpga3(
+    input [3:0] SW,
+    input rot_A, input rot_B, input rot_dwn,
+    input BTN0, input BTN1, input BTN2,
+    input reset, input clk,
+    output [7:0] LED,
+	 output R, output G, output B,
+	 output h_sync, output v_sync
+    );
 
 //-------------------------------------------
 //1.coding for VGA H_sync/V_sync and display coordinates
@@ -451,3 +460,538 @@ always@(*)
   5'h10:   Lmvjaw2= 16'h0007; 
   default: Lmvjaw2= 16'h0000;
   endcase
+
+
+//-----------------------------------------
+//7.coding for MNSTR pattern V-moving block
+//-----------------------------------------
+// 32x32 MNSTR
+//  moving upward:  
+//     Umvbdy00 : Umvbdy10  …act0 in a sequence of 5 flicks
+//     Umvbdy01 : Umvbdy11  …act1 in a sequence of 5 flicks
+//     Umvbdy02 : Umvbdy12  …act2 in a sequence of 5 flicks
+//  moving downward:  
+//     Dmvbdy00 : Dmvbdy10  …act0 in a sequence of 5 flicks
+//     Dmvbdy01 : Dmvbdy11  …act1 in a sequence of 5 flicks
+//     Dmvbdy02 : Dmvbdy12  …act2 in a sequence of 5 flicks
+always@(*)
+  case(MNSTR_y[4:0])
+  5'h00:   Umvbdy00= 16'h0000;    //00: up-left  act0
+  5'h01:   Umvbdy00= 16'h0000;
+  5'h02:   Umvbdy00= 16'h0000;
+  5'h03:   Umvbdy00= 16'h0000;
+  5'h04:   Umvbdy00= 16'h0000;
+  5'h05:   Umvbdy00= 16'h0400;
+  5'h06:   Umvbdy00= 16'h0E00;
+  5'h07:   Umvbdy00= 16'h0F00;
+  5'h08:   Umvbdy00= 16'h1F80;
+  5'h09:   Umvbdy00= 16'h3FC0;
+  5'h0A:   Umvbdy00= 16'h3FE0;
+  5'h0B:   Umvbdy00= 16'h7FF0;
+  5'h0C:   Umvbdy00= 16'h7FF8;
+  5'h0D:   Umvbdy00= 16'hFFFC;
+  5'h0E:   Umvbdy00= 16'hFFFE;
+  5'h0F:   Umvbdy00= 16'hFFFF;
+  5'h10:   Umvbdy00= 16'hFFFF;
+  5'h11:   Umvbdy00= 16'hFFFF;
+  5'h12:   Umvbdy00= 16'hFFFF;
+  5'h13:   Umvbdy00= 16'hFFFF;
+  5'h14:   Umvbdy00= 16'h7FFF;
+  5'h15:   Umvbdy00= 16'h7FFF;
+  5'h16:   Umvbdy00= 16'h7FFF;
+  5'h17:   Umvbdy00= 16'h3FFF;
+  5'h18:   Umvbdy00= 16'h1FFF;
+  5'h19:   Umvbdy00= 16'h1FFF;
+  5'h1A:   Umvbdy00= 16'h0FFF;
+  5'h1B:   Umvbdy00= 16'h07FF;
+  5'h1C:   Umvbdy00= 16'h03FF;
+  5'h1D:   Umvbdy00= 16'h01FF;
+  5'h1E:   Umvbdy00= 16'h003F;
+  5'h1F:   Umvbdy00= 16'h0007;
+  default: Umvbdy00= 16'h0000;
+  endcase
+  
+always@(*)
+  case(MNSTR_y[4:0])
+  5'h00:   Umvbdy10= 16'h0000;      //10:  up_right act0
+  5'h01:   Umvbdy10= 16'h0000;
+  5'h02:   Umvbdy10= 16'h0000;
+  5'h03:   Umvbdy10= 16'h0000;
+  5'h04:   Umvbdy10= 16'h0000;
+  5'h05:   Umvbdy10= 16'h0020;
+  5'h06:   Umvbdy10= 16'h0070;
+  5'h07:   Umvbdy10= 16'h00F0;
+  5'h08:   Umvbdy10= 16'h01F8;
+  5'h09:   Umvbdy10= 16'h03FC;
+  5'h0A:   Umvbdy10= 16'h07FE;
+  5'h0B:   Umvbdy10= 16'h0FFE;
+  5'h0C:   Umvbdy10= 16'h1FFE;
+  5'h0D:   Umvbdy10= 16'h3FFE;
+  5'h0E:   Umvbdy10= 16'h7FFE;
+  5'h0F:   Umvbdy10= 16'hFFFF;
+  5'h10:   Umvbdy10= 16'hFFFF;
+  5'h11:   Umvbdy10= 16'hFFFF;
+  5'h12:   Umvbdy10= 16'hFFFF;
+  5'h13:   Umvbdy10= 16'hFFFF;
+  5'h14:   Umvbdy10= 16'hFFFE;
+  5'h15:   Umvbdy10= 16'hFFFE;
+  5'h16:   Umvbdy10= 16'hFFFE;
+  5'h17:   Umvbdy10= 16'hFFFC;
+  5'h18:   Umvbdy10= 16'hFFF8;
+  5'h19:   Umvbdy10= 16'hFFF8;
+  5'h1A:   Umvbdy10= 16'hFFF0;
+  5'h1B:   Umvbdy10= 16'hFFE0;
+  5'h1C:   Umvbdy10= 16'hFFC0;
+  5'h1D:   Umvbdy10= 16'hFF80;
+  5'h1E:   Umvbdy10= 16'hFC00;
+  5'h1F:   Umvbdy10= 16'hE000;
+  default: Umvbdy10= 16'h0000;
+  endcase
+
+always@(*)
+  case(MNSTR_y[4:0])
+  5'h00:   Umvbdy01= 16'h0000;    //01: up-left act1
+  5'h01:   Umvbdy01= 16'h0000;
+  5'h02:   Umvbdy01= 16'h0000;
+  5'h03:   Umvbdy01= 16'h0040;
+  5'h04:   Umvbdy01= 16'h01C0;
+  5'h05:   Umvbdy01= 16'h03E0;
+  5'h06:   Umvbdy01= 16'h07F0;
+  5'h07:   Umvbdy01= 16'h0FF0;
+  5'h08:   Umvbdy01= 16'h1FF8;
+  5'h09:   Umvbdy01= 16'h3FF8;
+  5'h0A:   Umvbdy01= 16'h3FF8;
+  5'h0B:   Umvbdy01= 16'h7FFC;
+  5'h0C:   Umvbdy01= 16'h7FFC;
+  5'h0D:   Umvbdy01= 16'hFFFE;
+  5'h0E:   Umvbdy01= 16'hFFFF;
+  5'h0F:   Umvbdy01= 16'hFFFF;
+  5'h10:   Umvbdy01= 16'hFFFF;
+  5'h11:   Umvbdy01= 16'hFFFF;
+  5'h12:   Umvbdy01= 16'hFFFF;
+  5'h13:   Umvbdy01= 16'hFFFF;
+  5'h14:   Umvbdy01= 16'h7FFF;
+  5'h15:   Umvbdy01= 16'h7FFF;
+  5'h16:   Umvbdy01= 16'h7FFF;
+  5'h17:   Umvbdy01= 16'h3FFF;
+  5'h18:   Umvbdy01= 16'h1FFF;
+  5'h19:   Umvbdy01= 16'h1FFF;
+  5'h1A:   Umvbdy01= 16'h0FFF;
+  5'h1B:   Umvbdy01= 16'h07FF;
+  5'h1C:   Umvbdy01= 16'h03FF;
+  5'h1D:   Umvbdy01= 16'h01FF;
+  5'h1E:   Umvbdy01= 16'h003F;
+  5'h1F:   Umvbdy01= 16'h0007;
+  default: Umvbdy01= 16'h0000;
+  endcase
+  
+always@(*)
+  case(MNSTR_y[4:0])
+  5'h00:   Umvbdy11= 16'h0000;      //11:  up_right act1
+  5'h01:   Umvbdy11= 16'h0000;
+  5'h02:   Umvbdy11= 16'h0000;
+  5'h03:   Umvbdy11= 16'h0200;
+  5'h04:   Umvbdy11= 16'h0380;
+  5'h05:   Umvbdy11= 16'h07C0;
+  5'h06:   Umvbdy11= 16'h0FE0;
+  5'h07:   Umvbdy11= 16'h0FF0;
+  5'h08:   Umvbdy11= 16'h1FF8;
+  5'h09:   Umvbdy11= 16'h1FFC;
+  5'h0A:   Umvbdy11= 16'h1FFC;
+  5'h0B:   Umvbdy11= 16'h3FFE;
+  5'h0C:   Umvbdy11= 16'h3FFE;
+  5'h0D:   Umvbdy11= 16'h7FFF;
+  5'h0E:   Umvbdy11= 16'hFFFF;
+  5'h0F:   Umvbdy11= 16'hFFFF;
+  5'h10:   Umvbdy11= 16'hFFFF;
+  5'h11:   Umvbdy11= 16'hFFFF;
+  5'h12:   Umvbdy11= 16'hFFFF;
+  5'h13:   Umvbdy11= 16'hFFFF;
+  5'h14:   Umvbdy11= 16'hFFFE;
+  5'h15:   Umvbdy11= 16'hFFFE;
+  5'h16:   Umvbdy11= 16'hFFFE;
+  5'h17:   Umvbdy11= 16'hFFFC;
+  5'h18:   Umvbdy11= 16'hFFF8;
+  5'h19:   Umvbdy11= 16'hFFF8;
+  5'h1A:   Umvbdy11= 16'hFFF0;
+  5'h1B:   Umvbdy11= 16'hFFE0;
+  5'h1C:   Umvbdy11= 16'hFFC0;
+  5'h1D:   Umvbdy11= 16'hFF80;
+  5'h1E:   Umvbdy11= 16'hFC00;
+  5'h1F:   Umvbdy11= 16'hE000;
+  default: Umvbdy11= 16'h0000;
+  endcase
+
+always@(*)
+  case(MNSTR_y[4:0])
+  5'h00:   Umvbdy02= 16'h001C;    //02: up-left act2
+  5'h01:   Umvbdy02= 16'h003C;
+  5'h02:   Umvbdy02= 16'h007C;
+  5'h03:   Umvbdy02= 16'h00FC;
+  5'h04:   Umvbdy02= 16'h01FC;
+  5'h05:   Umvbdy02= 16'h03FC;
+  5'h06:   Umvbdy02= 16'h07FE;
+  5'h07:   Umvbdy02= 16'h0FFE;
+  5'h08:   Umvbdy02= 16'h1FFE;
+  5'h09:   Umvbdy02= 16'h3FFE;
+  5'h0A:   Umvbdy02= 16'h3FFE;
+  5'h0B:   Umvbdy02= 16'h7FFE;
+  5'h0C:   Umvbdy02= 16'h7FFE;
+  5'h0D:   Umvbdy02= 16'hFFFF;
+  5'h0E:   Umvbdy02= 16'hFFFF;
+  5'h0F:   Umvbdy02= 16'hFFFF;
+  5'h10:   Umvbdy02= 16'hFFFF;
+  5'h11:   Umvbdy02= 16'hFFFF;
+  5'h12:   Umvbdy02= 16'hFFFF;
+  5'h13:   Umvbdy02= 16'hFFFF;
+  5'h14:   Umvbdy02= 16'h7FFF;
+  5'h15:   Umvbdy02= 16'h7FFF;
+  5'h16:   Umvbdy02= 16'h7FFF;
+  5'h17:   Umvbdy02= 16'h3FFF;
+  5'h18:   Umvbdy02= 16'h1FFF;
+  5'h19:   Umvbdy02= 16'h1FFF;
+  5'h1A:   Umvbdy02= 16'h0FFF;
+  5'h1B:   Umvbdy02= 16'h07FF;
+  5'h1C:   Umvbdy02= 16'h03FF;
+  5'h1D:   Umvbdy02= 16'h01FF;
+  5'h1E:   Umvbdy02= 16'h003F;
+  5'h1F:   Umvbdy02= 16'h0007;
+  default: Umvbdy02= 16'h0000;
+  endcase
+  
+always@(*)
+  case(MNSTR_y[4:0])
+  5'h00:   Umvbdy12= 16'h7000;      //12:  up_right act2
+  5'h01:   Umvbdy12= 16'h7C00;
+  5'h02:   Umvbdy12= 16'h7E00;
+  5'h03:   Umvbdy12= 16'h7F00;
+  5'h04:   Umvbdy12= 16'h7F80;
+  5'h05:   Umvbdy12= 16'h7FC0;
+  5'h06:   Umvbdy12= 16'hFFE0;
+  5'h07:   Umvbdy12= 16'hFFF0;
+  5'h08:   Umvbdy12= 16'hFFF8;
+  5'h09:   Umvbdy12= 16'hFFFC;
+  5'h0A:   Umvbdy12= 16'hFFFC;
+  5'h0B:   Umvbdy12= 16'hFFFE;
+  5'h0C:   Umvbdy12= 16'hFFFE;
+  5'h0D:   Umvbdy12= 16'h7FFF;
+  5'h0E:   Umvbdy12= 16'hFFFF;
+  5'h0F:   Umvbdy12= 16'hFFFF;
+  5'h10:   Umvbdy12= 16'hFFFF;
+  5'h11:   Umvbdy12= 16'hFFFF;
+  5'h12:   Umvbdy12= 16'hFFFF;
+  5'h13:   Umvbdy12= 16'hFFFF;
+  5'h14:   Umvbdy12= 16'hFFFE;
+  5'h15:   Umvbdy12= 16'hFFFE;
+  5'h16:   Umvbdy12= 16'hFFFE;
+  5'h17:   Umvbdy12= 16'hFFFC;
+  5'h18:   Umvbdy12= 16'hFFF8;
+  5'h19:   Umvbdy12= 16'hFFF8;
+  5'h1A:   Umvbdy12= 16'hFFF0;
+  5'h1B:   Umvbdy12= 16'hFFE0;
+  5'h1C:   Umvbdy12= 16'hFFC0;
+  5'h1D:   Umvbdy12= 16'hFF80;
+  5'h1E:   Umvbdy12= 16'hFC00;
+  5'h1F:   Umvbdy12= 16'hE000;
+  default: Umvbdy12= 16'h0000;
+  endcase
+
+// = = = = = = = = = = =
+
+always@(*)
+  case(MNSTR_y[4:0])
+  5'h1F:   Dmvbdy00= 16'h0000;    //00: down-left  act0
+  5'h1E:   Dmvbdy00= 16'h0000;
+  5'h1D:   Dmvbdy00= 16'h0000;
+  5'h1C:   Dmvbdy00= 16'h0000;
+  5'h1B:   Dmvbdy00= 16'h0000;
+  5'h1A:   Dmvbdy00= 16'h0400;
+  5'h19:   Dmvbdy00= 16'h0E00;
+  5'h18:   Dmvbdy00= 16'h0F00;
+  5'h17:   Dmvbdy00= 16'h1F80;
+  5'h16:   Dmvbdy00= 16'h3FC0;
+  5'h15:   Dmvbdy00= 16'h3FE0;
+  5'h14:   Dmvbdy00= 16'h7FF0;
+  5'h13:   Dmvbdy00= 16'h7FF8;
+  5'h12:   Dmvbdy00= 16'hFFFC;
+  5'h11:   Dmvbdy00= 16'hFFFE;
+  5'h10:   Dmvbdy00= 16'hFFFF;
+  5'h0F:   Dmvbdy00= 16'hFFFF;
+  5'h0E:   Dmvbdy00= 16'hFFFF;
+  5'h0D:   Dmvbdy00= 16'hFFFF;
+  5'h0C:   Dmvbdy00= 16'hFFFF;
+  5'h0B:   Dmvbdy00= 16'h7FFF;
+  5'h0A:   Dmvbdy00= 16'h7FFF;
+  5'h09:   Dmvbdy00= 16'h7FFF;
+  5'h08:   Dmvbdy00= 16'h3FFF;
+  5'h07:   Dmvbdy00= 16'h1FFF;
+  5'h06:   Dmvbdy00= 16'h1FFF;
+  5'h05:   Dmvbdy00= 16'h0FFF;
+  5'h04:   Dmvbdy00= 16'h07FF;
+  5'h03:   Dmvbdy00= 16'h03FF;
+  5'h02:   Dmvbdy00= 16'h01FF;
+  5'h01:   Dmvbdy00= 16'h003F;
+  5'h00:   Dmvbdy00= 16'h0007;
+  default: Dmvbdy00= 16'h0000;
+  endcase
+  
+always@(*)
+  case(MNSTR_y[4:0])
+  5'h1F:   Dmvbdy10= 16'h0000;      //10:  down_right act0
+  5'h1E:   Dmvbdy10= 16'h0000;
+  5'h1D:   Dmvbdy10= 16'h0000;
+  5'h1C:   Dmvbdy10= 16'h0000;
+  5'h1B:   Dmvbdy10= 16'h0000;
+  5'h1A:   Dmvbdy10= 16'h0020;
+  5'h19:   Dmvbdy10= 16'h0070;
+  5'h18:   Dmvbdy10= 16'h00F0;
+  5'h17:   Dmvbdy10= 16'h01F8;
+  5'h16:   Dmvbdy10= 16'h03FC;
+  5'h15:   Dmvbdy10= 16'h07FE;
+  5'h14:   Dmvbdy10= 16'h0FFE;
+  5'h13:   Dmvbdy10= 16'h1FFE;
+  5'h12:   Dmvbdy10= 16'h3FFE;
+  5'h11:   Dmvbdy10= 16'h7FFE;
+  5'h10:   Dmvbdy10= 16'hFFFF;
+  5'h0F:   Dmvbdy10= 16'hFFFF;
+  5'h0E:   Dmvbdy10= 16'hFFFF;
+  5'h0D:   Dmvbdy10= 16'hFFFF;
+  5'h0C:   Dmvbdy10= 16'hFFFF;
+  5'h0B:   Dmvbdy10= 16'hFFFE;
+  5'h0A:   Dmvbdy10= 16'hFFFE;
+  5'h09:   Dmvbdy10= 16'hFFFE;
+  5'h08:   Dmvbdy10= 16'hFFFC;
+  5'h07:   Dmvbdy10= 16'hFFF8;
+  5'h06:   Dmvbdy10= 16'hFFF8;
+  5'h05:   Dmvbdy10= 16'hFFF0;
+  5'h04:   Dmvbdy10= 16'hFFE0;
+  5'h03:   Dmvbdy10= 16'hFFC0;
+  5'h02:   Dmvbdy10= 16'hFF80;
+  5'h01:   Dmvbdy10= 16'hFC00;
+  5'h00:   Dmvbdy10= 16'hE000;
+  default: Dmvbdy10= 16'h0000;
+  endcase
+
+always@(*)
+  case(MNSTR_y[4:0])
+  5'h1F:   Dmvbdy01= 16'h0000;    //01: down-left act1
+  5'h1E:   Dmvbdy01= 16'h0000;
+  5'h1D:   Dmvbdy01= 16'h0000;
+  5'h1C:   Dmvbdy01= 16'h0040;
+  5'h1B:   Dmvbdy01= 16'h01C0;
+  5'h1A:   Dmvbdy01= 16'h03E0;
+  5'h19:   Dmvbdy01= 16'h07F0;
+  5'h18:   Dmvbdy01= 16'h0FF0;
+  5'h17:   Dmvbdy01= 16'h1FF8;
+  5'h16:   Dmvbdy01= 16'h3FF8;
+  5'h15:   Dmvbdy01= 16'h3FF8;
+  5'h14:   Dmvbdy01= 16'h7FFC;
+  5'h13:   Dmvbdy01= 16'h7FFC;
+  5'h12:   Dmvbdy01= 16'hFFFE;
+  5'h11:   Dmvbdy01= 16'hFFFF;
+  5'h10:   Dmvbdy01= 16'hFFFF;
+  5'h0F:   Dmvbdy01= 16'hFFFF;
+  5'h0E:   Dmvbdy01= 16'hFFFF;
+  5'h0D:   Dmvbdy01= 16'hFFFF;
+  5'h0C:   Dmvbdy01= 16'hFFFF;
+  5'h0B:   Dmvbdy01= 16'h7FFF;
+  5'h0A:   Dmvbdy01= 16'h7FFF;
+  5'h09:   Dmvbdy01= 16'h7FFF;
+  5'h08:   Dmvbdy01= 16'h3FFF;
+  5'h07:   Dmvbdy01= 16'h1FFF;
+  5'h06:   Dmvbdy01= 16'h1FFF;
+  5'h05:   Dmvbdy01= 16'h0FFF;
+  5'h04:   Dmvbdy01= 16'h07FF;
+  5'h03:   Dmvbdy01= 16'h03FF;
+  5'h02:   Dmvbdy01= 16'h01FF;
+  5'h01:   Dmvbdy01= 16'h003F;
+  5'h00:   Dmvbdy01= 16'h0007;
+  default: Dmvbdy01= 16'h0000;
+  endcase
+  
+always@(*)
+  case(MNSTR_y[4:0])
+  5'h1F:   Dmvbdy11= 16'h0000;      //11:  down_right act1
+  5'h1E:   Dmvbdy11= 16'h0000;
+  5'h1D:   Dmvbdy11= 16'h0000;
+  5'h1C:   Dmvbdy11= 16'h0200;
+  5'h1B:   Dmvbdy11= 16'h0380;
+  5'h1A:   Dmvbdy11= 16'h07C0;
+  5'h19:   Dmvbdy11= 16'h0FE0;
+  5'h18:   Dmvbdy11= 16'h0FF0;
+  5'h17:   Dmvbdy11= 16'h1FF8;
+  5'h16:   Dmvbdy11= 16'h1FFC;
+  5'h15:   Dmvbdy11= 16'h1FFC;
+  5'h14:   Dmvbdy11= 16'h3FFE;
+  5'h13:   Dmvbdy11= 16'h3FFE;
+  5'h12:   Dmvbdy11= 16'h7FFF;
+  5'h11:   Dmvbdy11= 16'hFFFF;
+  5'h10:   Dmvbdy11= 16'hFFFF;
+  5'h0F:   Dmvbdy11= 16'hFFFF;
+  5'h0E:   Dmvbdy11= 16'hFFFF;
+  5'h0D:   Dmvbdy11= 16'hFFFF;
+  5'h0C:   Dmvbdy11= 16'hFFFF;
+  5'h0B:   Dmvbdy11= 16'hFFFE;
+  5'h0A:   Dmvbdy11= 16'hFFFE;
+  5'h09:   Dmvbdy11= 16'hFFFE;
+  5'h08:   Dmvbdy11= 16'hFFFC;
+  5'h07:   Dmvbdy11= 16'hFFF8;
+  5'h06:   Dmvbdy11= 16'hFFF8;
+  5'h05:   Dmvbdy11= 16'hFFF0;
+  5'h04:   Dmvbdy11= 16'hFFE0;
+  5'h03:   Dmvbdy11= 16'hFFC0;
+  5'h02:   Dmvbdy11= 16'hFF80;
+  5'h01:   Dmvbdy11= 16'hFC00;
+  5'h00:   Dmvbdy11= 16'hE000;
+  default: Dmvbdy11= 16'h0000;
+  endcase
+
+always@(*)
+  case(MNSTR_y[4:0])
+  5'h1F:   Dmvbdy02= 16'h001C;    //02: down-left act2
+  5'h1E:   Dmvbdy02= 16'h003C;
+  5'h1D:   Dmvbdy02= 16'h007C;
+  5'h1C:   Dmvbdy02= 16'h00FC;
+  5'h1B:   Dmvbdy02= 16'h01FC;
+  5'h1A:   Dmvbdy02= 16'h03FC;
+  5'h19:   Dmvbdy02= 16'h07FE;
+  5'h18:   Dmvbdy02= 16'h0FFE;
+  5'h17:   Dmvbdy02= 16'h1FFE;
+  5'h16:   Dmvbdy02= 16'h3FFE;
+  5'h15:   Dmvbdy02= 16'h3FFE;
+  5'h14:   Dmvbdy02= 16'h7FFE;
+  5'h13:   Dmvbdy02= 16'h7FFE;
+  5'h12:   Dmvbdy02= 16'hFFFF;
+  5'h11:   Dmvbdy02= 16'hFFFF;
+  5'h10:   Dmvbdy02= 16'hFFFF;
+  5'h0F:   Dmvbdy02= 16'hFFFF;
+  5'h0E:   Dmvbdy02= 16'hFFFF;
+  5'h0D:   Dmvbdy02= 16'hFFFF;
+  5'h0C:   Dmvbdy02= 16'hFFFF;
+  5'h0B:   Dmvbdy02= 16'h7FFF;
+  5'h0A:   Dmvbdy02= 16'h7FFF;
+  5'h09:   Dmvbdy02= 16'h7FFF;
+  5'h08:   Dmvbdy02= 16'h3FFF;
+  5'h07:   Dmvbdy02= 16'h1FFF;
+  5'h06:   Dmvbdy02= 16'h1FFF;
+  5'h05:   Dmvbdy02= 16'h0FFF;
+  5'h04:   Dmvbdy02= 16'h07FF;
+  5'h03:   Dmvbdy02= 16'h03FF;
+  5'h02:   Dmvbdy02= 16'h01FF;
+  5'h01:   Dmvbdy02= 16'h003F;
+  5'h00:   Dmvbdy02= 16'h0007;
+  default: Dmvbdy02= 16'h0000;
+  endcase
+  
+always@(*)
+  case(MNSTR_y[4:0])
+  5'h1F:   Dmvbdy12= 16'h7000;      //12:  down_right act2
+  5'h1E:   Dmvbdy12= 16'h7C00;
+  5'h1D:   Dmvbdy12= 16'h7E00;
+  5'h1C:   Dmvbdy12= 16'h7F00;
+  5'h1B:   Dmvbdy12= 16'h7F80;
+  5'h1A:   Dmvbdy12= 16'h7FC0;
+  5'h19:   Dmvbdy12= 16'hFFE0;
+  5'h18:   Dmvbdy12= 16'hFFF0;
+  5'h17:   Dmvbdy12= 16'hFFF8;
+  5'h16:   Dmvbdy12= 16'hFFFC;
+  5'h15:   Dmvbdy12= 16'hFFFC;
+  5'h14:   Dmvbdy12= 16'hFFFE;
+  5'h13:   Dmvbdy12= 16'hFFFE;
+  5'h12:   Dmvbdy12= 16'h7FFF;
+  5'h11:   Dmvbdy12= 16'hFFFF;
+  5'h10:   Dmvbdy12= 16'hFFFF;
+  5'h0F:   Dmvbdy12= 16'hFFFF;
+  5'h0E:   Dmvbdy12= 16'hFFFF;
+  5'h0D:   Dmvbdy12= 16'hFFFF;
+  5'h0C:   Dmvbdy12= 16'hFFFF;
+  5'h0B:   Dmvbdy12= 16'hFFFE;
+  5'h0A:   Dmvbdy12= 16'hFFFE;
+  5'h09:   Dmvbdy12= 16'hFFFE;
+  5'h08:   Dmvbdy12= 16'hFFFC;
+  5'h07:   Dmvbdy12= 16'hFFF8;
+  5'h06:   Dmvbdy12= 16'hFFF0;
+  5'h04:   Dmvbdy12= 16'hFFE0;
+  5'h03:   Dmvbdy12= 16'hFFC0;
+  5'h02:   Dmvbdy12= 16'hFF80;
+  5'h01:   Dmvbdy12= 16'hFC00;
+  5'h00:   Dmvbdy12= 16'hE000; 
+  default: Dmvbdy12= 16'h0000;
+  endcase
+
+
+//-----------------------------------
+//8.coding for MNSTR display block
+//-------------------------------------
+// region of MNSTR in 800x600 visible zone
+assign MNSTR_on= 
+ (X_pix>=body_x && X_pix<body_x+11'd0032 &&
+        Y_pix>=body_y && Y_pix<body_y+11'd0032)?   1:0;
+
+// active row of the MNSTR pattern (1x32 in 32x32) associated with
+// the active H-scan line
+assign  MNSTR_y= 
+(Y_pix>=body_y&&Y_pix<=body_y+11'd0031 )? Y_pix-body_y : 11'd0000;	
+always@(posedge reset or posedge clk)
+ if(reset)     MNSTR_row= 32'h000FE000;
+ else if(X_pix+11'h001==body_x)
+  case({mvdir_indx, act_cnt})
+  5'b11000:   MNSTR_row= {Rmvbody, Rmvjaw0};   //mv-right
+  5'b11001:   MNSTR_row= {Rmvbody, Rmvjaw1};
+  5'b11010:   MNSTR_row= {Rmvbody, Rmvjaw1};
+  5'b11011:   MNSTR_row= {Rmvbody, Rmvjaw2};
+  5'b11100:   MNSTR_row= {Rmvbody, Rmvjaw2};
+  5'b10000:   MNSTR_row= {Lmvjaw0, Lmvbody};    //mv-left
+  5'b10001:   MNSTR_row= {Lmvjaw1, Lmvbody};
+  5'b10010:   MNSTR_row= {Lmvjaw1, Lmvbody};
+  5'b10011:   MNSTR_row= {Lmvjaw2, Lmvbody};
+  5'b10100:   MNSTR_row= {Lmvjaw2, Lmvbody};
+  5'b01000:  MNSTR_row= {Dmvbdy00, Dmvbdy10};  //mv-dwn
+  5'b01001:  MNSTR_row= {Dmvbdy01, Dmvbdy11};
+  5'b01010:  MNSTR_row= {Dmvbdy01, Dmvbdy11};
+  5'b01011:  MNSTR_row= {Dmvbdy02, Dmvbdy12};
+  5'b01100:  MNSTR_row= {Dmvbdy02, Dmvbdy12};
+  5'b00000:  MNSTR_row= {Umvbdy00, Umvbdy10};  //mv-up
+  5'b00001:  MNSTR_row= {Umvbdy01, Umvbdy11};
+  5'b00010:  MNSTR_row= {Umvbdy01, Umvbdy11};
+  5'b00011:  MNSTR_row= {Umvbdy02, Umvbdy12};
+  5'b00100:  MNSTR_row= {Umvbdy02, Umvbdy12};
+  default:   MNSTR_row= 32'h00000000;     
+  endcase
+ else if(MNSTR_on) 
+MNSTR_row= {MNSTR_row[30:0], MNSTR_row[31]};
+ else     MNSTR_row= 32'h00000000;     //=MNSTR_row;???
+
+
+//--------------------------------
+//9.coding for MNSTR RGB control block
+//------------------------------
+assign   R_mnstr= 
+(MNSTR_on && MNSTR_row[31] && sw[0])? 1:0;
+assign   G_mnstr= 
+(MNSTR_on && MNSTR_row[31] && sw[1])? 1:0;
+assign   B_mnstr= 
+(MNSTR_on && MNSTR_row[31] && sw[2])? 1:0;
+
+always@(posedge reset or posedge clk)
+ if(reset) 
+   begin GG= 1'b0;
+         BB= 1'b0;
+	      RR= 1'b0;
+	end
+ else if(MNSTR_on)
+   begin RR= R_mnstr;
+	    GG= G_mnstr;
+        BB= B_mnstr;
+end
+ else begin RR= 1'b0;
+	      GG= 1'b0;
+          BB= 1'b0;
+	 end
+assign   R=RR, G= GG, B= BB;
+
+
+//--------------------------------
+//10.coding for internal status probing block
+//------------------------------
+assign   LED[7:0]= {rot_indx, 1’b0, pattn_scal};
