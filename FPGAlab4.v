@@ -1,5 +1,5 @@
 `timescale 1ns / 1ps
-module fpga3(
+module fpga4(
     input [3:0] SW,
     input rot_A, input rot_B, input rot_dwn,
     input BTN0, input BTN1, input BTN2,
@@ -8,6 +8,30 @@ module fpga3(
 	 output R, output G, output B,
 	 output h_sync, output v_sync
     );
+
+reg[10:0] H_scan,V_scan;
+wire H_on , V_on;
+wire[10:0] X_pix , Y_pix;
+reg RR , GG , BB;
+reg[2:0] pattn;
+reg[3:0] rot_indx;
+reg[19:0] debcnt;
+reg[2:0] pattn_scal;
+reg dett_A,dett_B,deb_A,deb_B,deb_AA;
+reg[19:0]debcnt0;
+wire MNSTR_on;
+reg [15:0]Umvbdy11, Umvbdy10, Umvbdy01,Umvbdy00,Umvbdy12,Umvbdy02;
+reg [15:0]Dmvbdy12,Dmvbdy11,Dmvbdy01,Dmvbdy02,Dmvbdy10,Dmvbdy00;
+reg[15:0]Lmvjaw1,Lmvjaw2,Lmvjaw0, Lmvbody,Rmvbody,Rmvjaw2,Rmvjaw1,Rmvjaw0;
+reg [31:0]MNSTR_row;
+reg [10:0] body_x,body_y;
+reg[1:0]mvdir_indx;
+reg [2:0]act_cnt;
+reg[19:0]debcnt1,debcnt2;
+reg gostop, gostop2;
+wire gostop1;
+wire [10:0]MNSTR_y;
+reg[19:0]slow_clk, slow_clk_end,slow_clk_last2;
 
 //-------------------------------------------
 //1.coding for VGA H_sync/V_sync and display coordinates
@@ -21,7 +45,7 @@ always@(posedge reset or posedge clk)
 always@(posedge reset or posedge clk)
   if(reset)                 V_scan= 11'h000;
   else if(V_scan== 11'd666 &&
-H_can== 11'd1040 )  V_scan= 11'h001;
+H_scan== 11'd1040 )  V_scan= 11'h001;
   else if(H_scan== 11'd1040)  V_scan= V_scan+11'h001; 
   else                     V_scan= V_scan;
 
@@ -29,7 +53,7 @@ H_can== 11'd1040 )  V_scan= 11'h001;
 assign  H_on= (H_scan>= 11'd0105 && H_scan<= 11'd0904);
 assign  V_on= (V_scan>= 11'd0024 && V_scan<= 11'd0623);
 
-// block for h_sync and v_sync
+// block for h_sync and v_sync 
 assign  h_sync= 
 ~(H_scan>= 11'd0921 && H_scan<= 11'd1040);
 assign  v_sync= 
@@ -53,31 +77,31 @@ assign  B= BB;
 //---------------------------------------
 always@(posedge reset or posedge clk)
  if(reset)      debcnt0= 20'h00000; 
- else if(btn0 && debcnt0<20'hFFFFE)   
+ else if(BTN0 && debcnt0<20'hFFFFE)   
 debcnt0= debcnt0+20'h00001;
- else if(~btn0 && debcnt0==20'hffffe) 
+ else if(~BTN0 && debcnt0==20'hffffe) 
 debcnt0= 20'h00000;
- else if(~btn0 && debcnt0!=20'h00000) 
+ else if(~BTN0 && debcnt0!=20'h00000) 
 debcnt0= debcnt0;
  else          debcnt0= debcnt0;
 
 always@(posedge reset or posedge clk)
  if(reset)      debcnt1= 20'h00000; 
- else if(btn1 && debcnt1<20'hFFFFE)   
+ else if(BTN1 && debcnt1<20'hFFFFE)   
 debcnt1= debcnt1+20'h00001;
- else if(~btn1 && debcnt1==20'hffffe) 
+ else if(~BTN1 && debcnt1==20'hffffe) 
 debcnt1= 20'h00000;
- else if(~btn1 && debcnt1!=20'h00000) 
+ else if(~BTN1 && debcnt1!=20'h00000) 
 debcnt1= debcnt1;
  else        debcnt1= debcnt1;
 
 always@(posedge reset or posedge clk)
  if(reset)     debcnt2= 20'h00000; 
- else if(btn2 && debcnt2<20'hFFFFE)  
+ else if(BTN2 && debcnt2<20'hFFFFE)  
  debcnt2= debcnt2+20'h00001;
- else if(~btn2 && debcnt2==20'hffffe) 
+ else if(~BTN2 && debcnt2==20'hffffe) 
 debcnt2= 20'h00000;
- else if(~btn2 && debcnt2!=20'h00000) 
+ else if(~BTN2 && debcnt2!=20'h00000) 
 debcnt2= debcnt2;
  else        debcnt2= debcnt2;
 
@@ -86,9 +110,13 @@ debcnt2= debcnt2;
 //4.coding for block for MONSTER movement triggering block
 //---------------------------------------
 always@(posedge reset or posedge clk)
- if(reset)      slow_clk= 20'h00000; 
+ if(reset)begin
+	slow_clk= 20'h00000;
+ end
+ else if(slow_clk == slow_clk_end)slow_clk = 20'h00000; 
  else         slow_clk= slow_clk+20'h00001;
-assign  mvclk= (slow_clk==20'hFFFFE)? 1:0;
+ 
+assign  mvclk= (slow_clk==slow_clk_last2)? 1:0;
 
 // block for act_cnt control: 0-1-2
 always@(posedge reset or negedge clk)  
@@ -97,7 +125,7 @@ always@(posedge reset or negedge clk)
   else if(act_cnt==3'b100)  act_cnt=3'b000;
   else 				   act_cnt= act_cnt+3'b001;
 
-// block for MONSTER moving “direction” control
+// block for MONSTER moving "direction" control
 // mvdir_indx:         10: leftward   11: rightward
 //                   00: upward    01: downward
 always@(posedge reset or negedge clk)        
@@ -107,7 +135,7 @@ else if(debcnt0==20'h2FFFE)  mvdir_indx=
 else if(debcnt1==20'h2FFFE)  mvdir_indx= ~mvdir_indx;
 else if(debcnt2==20'h2FFFE)  mvdir_indx= {~mvdir_indx[1], mvdir_indx[0]};
 else                      mvdir_indx= mvdir_indx;
-// block for MONSTER moving “location” control
+// block for MONSTER moving "location" control
 parameter   delta_x=11'h001, delta_y=11'h001;
 always@(posedge reset or posedge clk)
   if(reset)       {body_x, body_y}= {11'd0400, 11'd0300};
@@ -115,7 +143,7 @@ always@(posedge reset or posedge clk)
   else if(mvclk)
       // begin 
        if(mvdir_indx==2'b11)           // moving right 
-		  body_x= (body_x+11'd0032+delta_x<11'd0800)? 
+				body_x= (body_x+11'd0032+delta_x<11'd0760)? 
                body_x+delta_x :  body_x;
        else if(mvdir_indx==2'b10)       // moving left
 		  body_x= (body_x>delta_x)?                     
@@ -124,9 +152,9 @@ always@(posedge reset or posedge clk)
 		  body_y= (body_y>delta_y)?                     
                body_y-delta_y :  body_y;
        else                         // moving down
- body_y= (body_y+11'd32+delta_y<11'd0600)?     
+			body_y= (body_y+11'd32+delta_y<11'd0600)?     
                body_y+delta_y :  body_y;
-  else {body_x, body_y}={body_x, body_y};			
+		else {body_x, body_y}={body_x, body_y};			
 
 
 //---------------------------------------------
@@ -141,8 +169,7 @@ debcnt= 20'h00000;
  else if(~rot_dwn && debcnt!=20'h00000)  
 debcnt= debcnt;
  else              debcnt= debcnt;
-assign gostop1= 
-(debcnt== 20'hFFFFE || debcnt== 20'hFFFFD)? 1 : 0;
+assign gostop1= (debcnt== 20'hFFFFE || debcnt== 20'hFFFFD)? 1 : 0;
 always@(posedge reset or posedge clk)
  if(reset)    gostop2= 1'b0;
  else       gostop2= gostop1; 
@@ -924,14 +951,12 @@ always@(*)
 //8.coding for MNSTR display block
 //-------------------------------------
 // region of MNSTR in 800x600 visible zone
-assign MNSTR_on= 
- (X_pix>=body_x && X_pix<body_x+11'd0032 &&
-        Y_pix>=body_y && Y_pix<body_y+11'd0032)?   1:0;
+assign MNSTR_on=(X_pix>=body_x && X_pix<body_x+11'd0032 && Y_pix>=body_y && Y_pix<body_y+11'd0032)?   1:0;
 
 // active row of the MNSTR pattern (1x32 in 32x32) associated with
 // the active H-scan line
-assign  MNSTR_y= 
-(Y_pix>=body_y&&Y_pix<=body_y+11'd0031 )? Y_pix-body_y : 11'd0000;	
+assign  MNSTR_y= (Y_pix>=body_y&&Y_pix<=body_y+11'd0031 )? Y_pix-body_y : 11'd0000;	
+
 always@(posedge reset or posedge clk)
  if(reset)     MNSTR_row= 32'h000FE000;
  else if(X_pix+11'h001==body_x)
@@ -967,11 +992,11 @@ MNSTR_row= {MNSTR_row[30:0], MNSTR_row[31]};
 //9.coding for MNSTR RGB control block
 //------------------------------
 assign   R_mnstr= 
-(MNSTR_on && MNSTR_row[31] && sw[0])? 1:0;
+(MNSTR_on && MNSTR_row[31] && SW[0])? 1:0;
 assign   G_mnstr= 
-(MNSTR_on && MNSTR_row[31] && sw[1])? 1:0;
+(MNSTR_on && MNSTR_row[31] && SW[1])? 1:0;
 assign   B_mnstr= 
-(MNSTR_on && MNSTR_row[31] && sw[2])? 1:0;
+(MNSTR_on && MNSTR_row[31] && SW[2])? 1:0;
 
 always@(posedge reset or posedge clk)
  if(reset) 
@@ -994,4 +1019,169 @@ assign   R=RR, G= GG, B= BB;
 //--------------------------------
 //10.coding for internal status probing block
 //------------------------------
-assign   LED[7:0]= {rot_indx, 1’b0, pattn_scal};
+assign   LED[7:0]= {rot_indx, 1'b0, pattn_scal};
+
+//---------------------
+//rot
+//----------------------
+
+always@(posedge reset or negedge clk)
+	if(reset)begin
+		slow_clk_end = 20'hFFFFF;
+		slow_clk_last2 = 20'hFFFFE;
+	end
+	else if(deb_A & ~deb_AA)
+		if(!deb_B)    //-
+		
+			case(slow_clk_end)
+				20'hFFFFF: begin
+					slow_clk_end = slow_clk_end;
+					slow_clk_last2 = slow_clk_last2;
+				end
+				20'hDFFFF: begin
+					slow_clk_end = 20'hFFFFF;
+					slow_clk_last2 = 20'hFFFFE;
+				end
+				20'hBFFFF: begin
+					slow_clk_end = 20'hDFFFF;
+					slow_clk_last2 = 20'hDFFFE;
+				end
+				20'h9FFFF: begin
+					slow_clk_end = 20'hBFFFF;
+					slow_clk_last2 = 20'hBFFFE;
+				end
+				20'h7FFFF: begin
+					slow_clk_end = 20'h9FFFF;
+					slow_clk_last2 = 20'h9FFFE;
+				end
+				20'h5FFFF: begin
+					slow_clk_end = 20'h7FFFF;
+					slow_clk_last2 = 20'h7FFFE;
+				end
+				20'h3FFFF: begin
+					slow_clk_end = 20'h5FFFF;
+					slow_clk_last2 = 20'h5FFFE;
+				end
+				20'h1FFFF: begin
+					slow_clk_end = 20'h3FFFF;
+					slow_clk_last2 = 20'h3FFFE;
+				end
+			endcase
+		
+		
+		/*
+		    if(slow_clk_end < 20'hFFFFF) begin
+				slow_clk_end = slow_clk_end + 20'h20000;
+				slow_clk_last2 = slow_clk_last2 + 20'h20000;
+			 end*/
+		else
+			case(slow_clk_end)
+				20'h1FFFF: begin
+					slow_clk_end = slow_clk_end;
+					slow_clk_last2 = slow_clk_last2;
+				end
+				20'h3FFFF: begin
+					slow_clk_end = 20'h1FFFF;
+					slow_clk_last2 = 20'h1FFFE;
+				end
+				20'h5FFFF: begin
+					slow_clk_end = 20'h3FFFF;
+					slow_clk_last2 = 20'h3FFFE;
+				end
+				20'h7FFFF: begin
+					slow_clk_end = 20'h5FFFF;
+					slow_clk_last2 = 20'hB5FFE;
+				end
+				20'h9FFFF: begin
+					slow_clk_end = 20'h7FFFF;
+					slow_clk_last2 = 20'h7FFFE;
+				end
+				20'hBFFFF: begin
+					slow_clk_end = 20'h9FFFF;
+					slow_clk_last2 = 20'h9FFFE;
+				end
+				20'hDFFFF: begin
+					slow_clk_end = 20'hBFFFF;
+					slow_clk_last2 = 20'hBFFFE;
+				end
+				20'hFFFFF: begin
+					slow_clk_end = 20'hDFFFF;
+					slow_clk_last2 = 20'hDFFFE;
+				end
+			endcase
+		
+		/*
+			if(slow_clk_end > 20'h1FFFF) begin
+				slow_clk_end = slow_clk_end - 20'h20000;
+				slow_clk_last2 = slow_clk_last2 - 20'h20000;
+			 end*/
+	else begin
+		slow_clk_end = slow_clk_end;
+		slow_clk_last2 = slow_clk_last2;
+	end
+
+always@(posedge reset or posedge clk)
+	if(reset)
+		begin
+			dett_A=1'b1;
+			dett_B=1'b1;
+        end
+	else
+		begin
+			dett_A=rot_A;
+			dett_B=rot_B;
+        end 
+	always@(posedge reset or posedge clk) 
+	if(reset)
+		begin
+			deb_A=1'b1;
+			deb_B=1'b1;
+        end
+	else if(dett_A && dett_B)
+		begin
+			deb_A=1'b1;
+            deb_B=deb_B;
+        end
+	else if(~dett_A && ~dett_B)
+		begin
+			deb_A=1'b0;
+            deb_B=deb_B;
+        end
+	else if(~dett_A && dett_B)
+		begin
+			deb_A=deb_A;
+            deb_B=1'b1;
+        end
+	else if(dett_A && ~dett_B)
+		begin
+			deb_A=deb_A; 
+         deb_B=1'b0;
+        end
+	always@(posedge reset or posedge clk)
+	if(reset)
+		deb_AA= 1'b1;
+	else
+		deb_AA= deb_A;    // relationship btw deb_A and deb_AA?
+	
+endmodule
+
+/*
+reg[10:0] H_scan,V_scan;
+wire H_on , V_on;
+wire[10:0] X_pix , Y_pix;
+reg RR , GG , BB;
+reg[2:0] pattn;
+reg[3:0] rot_indx;
+reg[19:0] debcnt;
+reg scal2;
+wire scal1,scal_change;
+reg[2:0] pattn_scal;
+reg dett_A,dett_B,deb_A,deb_B,deb_AA;
+wire[10:0] RAD;
+reg[10:0] X_cntr;
+wire R210,R220,R230,R240,R250,R212,R214,R216;
+//,R222,R224,R226,R217,R211,R213,R215;
+wire G210,G220,G230,G240,G250,G212,G214,G216;
+wire B210,B220,B230,B240,B250,B212,B214,B216;
+
+*/
